@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+eclipse/
+run/
+
+# Forge MDK
+forge-*.txt
+forge-*.zip
+MinecraftForge-Credits.txt
+MinecraftForge-License.txt
+CREDITS-fml.txt
+LICENSE-fml.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ローカル設定
+local.properties
+gradle-local.properties
