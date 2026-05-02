@@ -38,16 +38,11 @@ public class BlockFloorMarker extends Block {
         return true;
     }
 
-    // 当たり判定を薄く（スラブ相当）して邪魔にならないようにする
-    @Override
-    public net.minecraft.util.math.AxisAlignedBB getBoundingBox(
-            IBlockState state, net.minecraft.world.IBlockAccess world, BlockPos pos) {
-        return new net.minecraft.util.math.AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
-    }
-
+    // フルサイズのままガラスのように透明にする
+    // → ブロックを上に積める・エレベーターのシャフト内で普通に使える
     @Override
     public boolean isOpaqueCube(IBlockState state) { return false; }
 
     @Override
-    public boolean isFullCube(IBlockState state) { return false; }
+    public boolean isFullCube(IBlockState state) { return true; }
 }

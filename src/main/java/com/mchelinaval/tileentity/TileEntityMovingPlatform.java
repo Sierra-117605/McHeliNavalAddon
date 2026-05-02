@@ -8,6 +8,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -154,6 +156,8 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
         targetY = nextFloor + 1.0;
         goingUp = true;
         moving  = true;
+        markDirty();
+        syncToClient();
         McHeliNavalAddon.logger.info("Elevator going UP to floor Y={}", nextFloor);
     }
 
@@ -181,6 +185,8 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
         targetY = nextFloor + 1.0;
         goingUp = false;
         moving  = true;
+        markDirty();
+        syncToClient();
         McHeliNavalAddon.logger.info("Elevator going DOWN to floor Y={}", nextFloor);
     }
 
@@ -213,6 +219,8 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
         currentOffset = 0.0;
         targetY = Double.NaN;
         jbdMoved = 0.0;
+        markDirty();
+        syncToClient();
     }
 
     public String getModeDescription() {
@@ -224,6 +232,9 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
     }
 
     public Mode getMode() { return mode; }
+    public boolean isMoving() { return moving; }
+    /** 現在エンティティがいるY座標（コントローラーY＋移動オフセット） */
+    public double getCurrentY() { return pos.getY() + currentOffset; }
     public boolean isCatapultLinked() { return catapultLinked || mode == Mode.JBD; }
     public void setCatapultLinked(boolean v) { catapultLinked = v; }
 
@@ -311,5 +322,35 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
     @Override
     public boolean shouldRefresh(World world, BlockPos pos, IBlockState old, IBlockState nw) {
         return old.getBlock() != nw.getBlock();
+    }
+
+    // -------------------------------------------------------
+    // クライアントへの状態同期（GUIの表示に使う）
+    // -------------------------------------------------------
+
+    /** サーバー→クライアントへTileEntityデータを送るパケットを生成 */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket() {
+        return new SPacketUpdateTileEntity(pos, 0, getUpdateTag());
+    }
+
+    /** 同期するNBTデータ（全フィールドを含む） */
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        return writeToNBT(new NBTTagCompound());
+    }
+
+    /** クライアント側でパケットを受け取ったときにNBTを反映 */
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        readFromNBT(pkt.getNbtCompound());
+    }
+
+    /** ブロック更新通知でクライアントへ同期する */
+    private void syncToClient() {
+        if (world != null && !world.isRemote) {
+            IBlockState state = world.getBlockState(pos);
+            world.notifyBlockUpdate(pos, state, state, 3);
+        }
     }
 }

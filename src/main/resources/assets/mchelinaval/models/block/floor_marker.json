@@ -1,7 +1,6 @@
 {
-  "parent": "block/thin_block",
+  "parent": "block/cube_all",
   "textures": {
-    "texture": "mchelinaval:blocks/floor_marker",
-    "particle": "mchelinaval:blocks/floor_marker"
+    "all": "mchelinaval:blocks/floor_marker"
   }
 }

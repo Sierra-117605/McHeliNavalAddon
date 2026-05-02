@@ -1,5 +1,7 @@
 package com.mchelinaval.block;
 
+import com.mchelinaval.McHeliNavalAddon;
+import com.mchelinaval.gui.NavalGuiHandler;
 import com.mchelinaval.tileentity.TileEntityMovingPlatform;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -10,19 +12,16 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
 /**
  * 移動プラットフォームのコントローラーブロック。
  *
- * 【ELEVATORモード】
- *   右クリック         → 上のフロアマーカーへ移動
- *   スニーク+右クリック → 下のフロアマーカーへ移動 / モード切替
- *
- * 【JBDモード】
- *   右クリック         → 手動で展開/格納トグル
- *   スニーク+右クリック → モード切替
+ * 【操作方法】
+ *   右クリック → GUIを開く
+ *     GUIから「▲ 上へ」「▼ 下へ」（ELEVATORモード）
+ *     GUIから「展開/格納」（JBDモード）
+ *     GUIから「モード切替」（ELEVATOR ⇔ JBD）
  */
 public class BlockMovingPlatform extends Block implements ITileEntityProvider {
 
@@ -37,31 +36,17 @@ public class BlockMovingPlatform extends Block implements ITileEntityProvider {
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
+        // サーバー側だけGUIを開く処理をする（クライアントは false で早期リターン）
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
         if (!(te instanceof TileEntityMovingPlatform)) return true;
-        TileEntityMovingPlatform platform = (TileEntityMovingPlatform) te;
 
-        if (player.isSneaking()) {
-            // スニーク+右クリック
-            if (platform.getMode() == TileEntityMovingPlatform.Mode.ELEVATOR) {
-                // ELEVATORモード中は下へ
-                platform.goDown(player);
-            } else {
-                // JBDモード中はモード切替
-                platform.cycleMode();
-                player.sendMessage(new TextComponentString(
-                    "[Naval] " + platform.getModeDescription()));
-            }
-        } else {
-            // 通常右クリック
-            if (platform.getMode() == TileEntityMovingPlatform.Mode.ELEVATOR) {
-                platform.goUp(player);
-            } else {
-                platform.toggle();
-            }
-        }
+        // GUIを開く（NavalGuiHandlerが呼ばれてGuiMovingPlatformが表示される）
+        player.openGui(McHeliNavalAddon.instance,
+                       NavalGuiHandler.GUI_MOVING_PLATFORM,
+                       world,
+                       pos.getX(), pos.getY(), pos.getZ());
         return true;
     }
 
