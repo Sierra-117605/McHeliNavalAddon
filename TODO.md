@@ -1,50 +1,40 @@
 # McHeliNavalAddon — TODO
 
-最終更新: 2026-05-01
+最終更新: 2026-05-03
 
 ---
 
-## 現在のフェーズ: M0（MCHELI 1.14解析）
+## 現在のフェーズ: M4（カタパルト連動・動作確認）
 
 ---
 
 ## 進行中
 
-- [ ] MCHELI 1.14 jarをデコンパイルして機体エンティティのクラス名・速度フィールドを特定する
+- [ ] `./gradlew runClient` でゲーム内にブロックが出ることを確認する
+- [ ] カタパルトブロックを設置→機体を乗せて右クリックで打ち出されることを確認する
+- [ ] 移動プラットフォームブロックを設置→右クリックで動作確認する
 
 ---
 
 ## 未着手
 
-### M1: 空MODビルド
-- [ ] build.gradle を作成（Forge 1.14.4 / ForgeGradle 3.x）
-- [ ] gradle.properties 作成
-- [ ] McHeliNavalAddon.java（@Modエントリポイント）作成
-- [ ] mods.toml 作成
-- [ ] `libs/` にMCHELI 1.14 jarを配置してdeobf依存として追加
-- [ ] `./gradlew runClient` でForgeに読み込まれることを確認
+### M4: 動作確認・調整
+- [ ] カタパルトの打ち出し速度を実際に試して`LAUNCH_SPEED`の値を調整する
+- [ ] 移動プラットフォームのJBDモード（Y+Z斜め）をカタパルト隣接で動作確認する
+- [ ] エレベーターモード（Y軸）の移動距離・速度を確認する
 
-### M2: カタパルト
-- [ ] BlockCatapult.java 作成
-- [ ] TileEntityCatapult.java 作成（速度付与ロジック）
-- [ ] 隣接する移動プラットフォームへの通知処理（機体セット・離脱）
-- [ ] スチームパーティクル・効果音
-- [ ] config: 打ち出し速度
-
-### M3: 移動プラットフォーム（手動）
-- [ ] BlockMovingController.java 作成（コントローラーブロック）
-- [ ] TileEntityMovingController.java（範囲内ブロック移動ロジック）
-- [ ] 移動方向: Y軸（エレベーター）・X/Z軸（スライドドア）
-- [ ] 移動距離・速度のconfig/GUI設定
-- [ ] エンティティ（機体・プレイヤー）追従処理
-
-### M4: 斜め移動・カタパルト連動（JBD）
-- [ ] 移動方向に「Y+Z同時（斜め）」を追加
-- [ ] カタパルト連動トリガーの実装
-- [ ] 機体セット→展開・機体離脱→格納の自動制御
+### 残課題
+- [ ] テクスチャを追加する（現状はデフォルトの紫チェック柄）
+  - `src/main/resources/assets/mchelinaval/textures/blocks/` にPNG画像を置く
+  - `src/main/resources/assets/mchelinaval/blockstates/` にJSONを置く
+  - `src/main/resources/assets/mchelinaval/models/block/` にJSONを置く
+- [ ] `config/mchelinaval.cfg` でカタパルト速度・プラットフォーム速度を変更できるようにする
 
 ---
 
 ## 完了済み
 
-（なし）
+- [x] M0: MCHELI 1.1.4 jar解析（MCH_EntityAircraft・速度フィールド特定）
+- [x] M1: 空MODビルド（BUILD SUCCESSFUL確認）
+- [x] M2: カタパルト実装（BlockCatapult + TileEntityCatapult）
+- [x] M3: 移動プラットフォーム実装（BlockMovingPlatform + TileEntityMovingPlatform）

@@ -50,6 +50,15 @@
 - TileEntity登録も `GameRegistry.registerTileEntity()`
 - `@Mod.EventBusSubscriber` はそのまま使える
 
+### stable_39 マッピングでよくある名前の違い（ハマりポイント）
+| 間違えやすい名前 | 正しい名前（stable_39）|
+|---|---|
+| `setUnlocalizedName()` | `setTranslationKey()` |
+| `EnumFacing.getHorizontal(int)` | `EnumFacing.byHorizontalIndex(int)` |
+| `facing.getFrontOffsetX()` | `facing.getXOffset()` |
+| `facing.getFrontOffsetZ()` | `facing.getZOffset()` |
+| `net.minecraft.util.SoundEvents` | `net.minecraft.init.SoundEvents` |
+
 ---
 
 ## リフレクションの注意点
