@@ -26,3 +26,7 @@ Thumbs.db
 # ローカル設定
 local.properties
 gradle-local.properties
+
+# 依存jarは再配布不可のためGit管理外
+# mcheli-1.1.4.jar は別途入手してlibsに配置すること
+libs/*.jar
