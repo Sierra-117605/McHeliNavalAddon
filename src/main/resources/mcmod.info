@@ -1,0 +1,12 @@
+[
+  {
+    "modid": "mchelinaval",
+    "name": "McHeli Naval Addon",
+    "description": "Adds carrier deck equipment (catapult, moving platform) for MCHELI.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "authors": [],
+    "dependencies": ["mcheli"]
+  }
+]
