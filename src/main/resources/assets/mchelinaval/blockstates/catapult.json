@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "mchelinaval:catapult" },
+    "facing=south": { "model": "mchelinaval:catapult", "y": 180 },
+    "facing=east":  { "model": "mchelinaval:catapult", "y": 90  },
+    "facing=west":  { "model": "mchelinaval:catapult", "y": 270 }
+  }
+}

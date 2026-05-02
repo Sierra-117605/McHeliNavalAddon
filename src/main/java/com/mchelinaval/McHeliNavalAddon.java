@@ -1,10 +1,13 @@
 package com.mchelinaval;
 
+import com.mchelinaval.config.NavalConfig;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
 
 /**
  * McHeliNavalAddon — エントリポイント
@@ -22,7 +25,6 @@ public class McHeliNavalAddon {
     public static final String NAME    = "McHeli Naval Addon";
     public static final String VERSION = "1.0.0";
 
-    // ログ出力用（他クラスからも使えるようにstaticで持つ）
     public static Logger logger;
 
     @EventHandler
@@ -30,7 +32,9 @@ public class McHeliNavalAddon {
         logger = event.getModLog();
         logger.info("{} preInit start", NAME);
 
-        // ブロック・アイテム登録はここで行う（M2以降で追加）
+        // config/mchelinaval.cfg を読み込む
+        File configFile = new File(event.getModConfigurationDirectory(), "mchelinaval.cfg");
+        NavalConfig.init(configFile);
     }
 
     @EventHandler

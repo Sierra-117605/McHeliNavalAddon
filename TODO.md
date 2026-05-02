@@ -4,31 +4,24 @@
 
 ---
 
-## 現在のフェーズ: M4（カタパルト連動・動作確認）
+## 現在のフェーズ: 動作確認
 
 ---
 
-## 進行中
+## 次にやること（ゲームで確認）
 
-- [ ] `./gradlew runClient` でゲーム内にブロックが出ることを確認する
-- [ ] カタパルトブロックを設置→機体を乗せて右クリックで打ち出されることを確認する
-- [ ] 移動プラットフォームブロックを設置→右クリックで動作確認する
+- [ ] `./gradlew runClient` でゲームを起動する
+- [ ] クリエイティブタブ「McHeli Naval Addon」にブロックが表示されることを確認
+- [ ] カタパルトブロックを設置 → MCHELI機体を乗せて右クリック → 打ち出されることを確認
+- [ ] 移動プラットフォームを設置 → 右クリックで動作確認（エレベーターモード）
+- [ ] 移動プラットフォームをカタパルト隣接に設置 → JBD連動の動作確認
+- [ ] カタパルト速度など `config/mchelinaval.cfg` で値が変更できることを確認
 
----
+## 調整が必要になりそうな箇所
 
-## 未着手
-
-### M4: 動作確認・調整
-- [ ] カタパルトの打ち出し速度を実際に試して`LAUNCH_SPEED`の値を調整する
-- [ ] 移動プラットフォームのJBDモード（Y+Z斜め）をカタパルト隣接で動作確認する
-- [ ] エレベーターモード（Y軸）の移動距離・速度を確認する
-
-### 残課題
-- [ ] テクスチャを追加する（現状はデフォルトの紫チェック柄）
-  - `src/main/resources/assets/mchelinaval/textures/blocks/` にPNG画像を置く
-  - `src/main/resources/assets/mchelinaval/blockstates/` にJSONを置く
-  - `src/main/resources/assets/mchelinaval/models/block/` にJSONを置く
-- [ ] `config/mchelinaval.cfg` でカタパルト速度・プラットフォーム速度を変更できるようにする
+- カタパルトの `LAUNCH_SPEED`（デフォルト3.0）— 実際に試して適切な値に調整
+- 移動プラットフォームの `DEFAULT_MOVE_SPEED`（デフォルト0.05）— 速すぎ/遅すぎなら調整
+- 移動プラットフォームの `DEFAULT_TRAVEL_DISTANCE`（デフォルト5ブロック）— JBDとして使う場合の距離調整
 
 ---
 
@@ -38,3 +31,7 @@
 - [x] M1: 空MODビルド（BUILD SUCCESSFUL確認）
 - [x] M2: カタパルト実装（BlockCatapult + TileEntityCatapult）
 - [x] M3: 移動プラットフォーム実装（BlockMovingPlatform + TileEntityMovingPlatform）
+- [x] クリエイティブタブ追加
+- [x] config対応（mchelinaval.cfg でカタパルト速度・プラットフォーム設定を変更可能）
+- [x] テクスチャJSON + PNG生成（カタパルト: グレー+黄ストライプ、プラットフォーム: グレー+白ストライプ）
+- [x] 最終ビルド成功 → McHeliNavalAddon-1.0.0.jar 生成

@@ -58,6 +58,7 @@
 | `facing.getFrontOffsetX()` | `facing.getXOffset()` |
 | `facing.getFrontOffsetZ()` | `facing.getZOffset()` |
 | `net.minecraft.util.SoundEvents` | `net.minecraft.init.SoundEvents` |
+| `CreativeTabs.getTabIconItem()` | `CreativeTabs.createIcon()` （戻り値はItemStackに変更）|
 
 ---
 

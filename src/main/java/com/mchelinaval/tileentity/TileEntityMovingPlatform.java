@@ -42,19 +42,24 @@ public class TileEntityMovingPlatform extends TileEntity implements ITickable {
         JBD         // Y+Z同時・斜め（ジェットブラストデフレクター）
     }
 
+    // configから変更可能なデフォルト値（NavalConfigが起動時に上書きする）
+    public static double DEFAULT_MOVE_SPEED      = 0.05;
+    public static int    DEFAULT_TRAVEL_DISTANCE = 5;
+    public static int    DEFAULT_RANGE           = 5;
+
     // -------------------------------------------------------
     // 状態
     // -------------------------------------------------------
     private Mode mode = Mode.ELEVATOR;
 
     // 移動距離（ブロック数）
-    private int travelDistance = 5;
+    private int travelDistance = DEFAULT_TRAVEL_DISTANCE;
 
     // 移動速度（毎tick何ブロック移動するか。0.05 = 1秒で1ブロック程度）
-    private double moveSpeed = 0.05;
+    private double moveSpeed = DEFAULT_MOVE_SPEED;
 
     // 対象範囲（コントローラーから何ブロック以内のブロックを動かすか）
-    private int range = 5;
+    private int range = DEFAULT_RANGE;
 
     // カタパルト連動モードか
     private boolean catapultLinked = false;

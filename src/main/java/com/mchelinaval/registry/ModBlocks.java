@@ -1,10 +1,12 @@
 package com.mchelinaval.registry;
 
+import com.mchelinaval.McHeliNavalAddon;
 import com.mchelinaval.block.BlockCatapult;
 import com.mchelinaval.block.BlockMovingPlatform;
 import com.mchelinaval.tileentity.TileEntityCatapult;
 import com.mchelinaval.tileentity.TileEntityMovingPlatform;
 import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraftforge.event.RegistryEvent;
@@ -16,12 +18,20 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
  * ブロックとTileEntityの登録をまとめるクラス。
  * ForgeのRegistryEventを使って登録する（1.12.2の推奨方式）。
  */
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(modid = McHeliNavalAddon.MODID)
 public class ModBlocks {
 
     // ブロックのインスタンスを静的に保持（他クラスから参照できるようにする）
     public static BlockCatapult CATAPULT;
     public static BlockMovingPlatform MOVING_PLATFORM;
+
+    // クリエイティブタブ（Naval Addonのタブを独立して作る）
+    public static final CreativeTabs CREATIVE_TAB = new CreativeTabs("mchelinaval") {
+        @Override
+        public net.minecraft.item.ItemStack createIcon() {
+            return new net.minecraft.item.ItemStack(CATAPULT);
+        }
+    };
 
     // -------------------------------------------------------
     // ブロック登録イベント
@@ -30,6 +40,10 @@ public class ModBlocks {
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         CATAPULT         = new BlockCatapult();
         MOVING_PLATFORM  = new BlockMovingPlatform();
+
+        // クリエイティブタブをセット
+        CATAPULT.setCreativeTab(CREATIVE_TAB);
+        MOVING_PLATFORM.setCreativeTab(CREATIVE_TAB);
 
         event.getRegistry().registerAll(
             CATAPULT,
