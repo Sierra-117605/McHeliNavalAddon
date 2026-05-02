@@ -1,6 +1,12 @@
 {
-  "parent": "block/cube_all",
+  "parent": "block/cube",
   "textures": {
-    "all": "mchelinaval:blocks/moving_platform"
+    "up":     "mchelinaval:blocks/moving_platform_top",
+    "down":   "mchelinaval:blocks/moving_platform_bottom",
+    "north":  "mchelinaval:blocks/moving_platform_side",
+    "south":  "mchelinaval:blocks/moving_platform_side",
+    "east":   "mchelinaval:blocks/moving_platform_side",
+    "west":   "mchelinaval:blocks/moving_platform_side",
+    "particle": "mchelinaval:blocks/moving_platform_side"
   }
 }

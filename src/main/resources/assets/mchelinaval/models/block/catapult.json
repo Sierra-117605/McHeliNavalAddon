@@ -1,6 +1,12 @@
 {
-  "parent": "block/cube_all",
+  "parent": "block/cube",
   "textures": {
-    "all": "mchelinaval:blocks/catapult"
+    "up":     "mchelinaval:blocks/catapult_top",
+    "down":   "mchelinaval:blocks/catapult_bottom",
+    "north":  "mchelinaval:blocks/catapult_side",
+    "south":  "mchelinaval:blocks/catapult_side",
+    "east":   "mchelinaval:blocks/catapult_side",
+    "west":   "mchelinaval:blocks/catapult_side",
+    "particle": "mchelinaval:blocks/catapult_side"
   }
 }
