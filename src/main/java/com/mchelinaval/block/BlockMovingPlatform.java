@@ -10,12 +10,19 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
 /**
  * 移動プラットフォームのコントローラーブロック。
- * 右クリックで移動開始/停止をトグルする。
- * 移動方向・距離・速度はTileEntityで管理する。
+ *
+ * 【ELEVATORモード】
+ *   右クリック         → 上のフロアマーカーへ移動
+ *   スニーク+右クリック → 下のフロアマーカーへ移動 / モード切替
+ *
+ * 【JBDモード】
+ *   右クリック         → 手動で展開/格納トグル
+ *   スニーク+右クリック → モード切替
  */
 public class BlockMovingPlatform extends Block implements ITileEntityProvider {
 
@@ -26,9 +33,6 @@ public class BlockMovingPlatform extends Block implements ITileEntityProvider {
         setHardness(3.0f);
     }
 
-    // -------------------------------------------------------
-    // 右クリックで移動トグル
-    // -------------------------------------------------------
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
@@ -36,16 +40,25 @@ public class BlockMovingPlatform extends Block implements ITileEntityProvider {
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
-        if (te instanceof TileEntityMovingPlatform) {
-            TileEntityMovingPlatform platform = (TileEntityMovingPlatform) te;
+        if (!(te instanceof TileEntityMovingPlatform)) return true;
+        TileEntityMovingPlatform platform = (TileEntityMovingPlatform) te;
 
-            if (player.isSneaking()) {
-                // スニーク右クリック → 設定サイクル（移動方向を切り替え）
-                platform.cycleMode();
-                player.sendMessage(new net.minecraft.util.text.TextComponentString(
-                    "[Naval] Mode: " + platform.getModeDescription()));
+        if (player.isSneaking()) {
+            // スニーク+右クリック
+            if (platform.getMode() == TileEntityMovingPlatform.Mode.ELEVATOR) {
+                // ELEVATORモード中は下へ
+                platform.goDown(player);
             } else {
-                // 通常右クリック → 移動トグル
+                // JBDモード中はモード切替
+                platform.cycleMode();
+                player.sendMessage(new TextComponentString(
+                    "[Naval] " + platform.getModeDescription()));
+            }
+        } else {
+            // 通常右クリック
+            if (platform.getMode() == TileEntityMovingPlatform.Mode.ELEVATOR) {
+                platform.goUp(player);
+            } else {
                 platform.toggle();
             }
         }
@@ -58,7 +71,5 @@ public class BlockMovingPlatform extends Block implements ITileEntityProvider {
     }
 
     @Override
-    public boolean hasTileEntity(IBlockState state) {
-        return true;
-    }
+    public boolean hasTileEntity(IBlockState state) { return true; }
 }

@@ -2,6 +2,7 @@ package com.mchelinaval.registry;
 
 import com.mchelinaval.McHeliNavalAddon;
 import com.mchelinaval.block.BlockCatapult;
+import com.mchelinaval.block.BlockFloorMarker;
 import com.mchelinaval.block.BlockMovingPlatform;
 import com.mchelinaval.tileentity.TileEntityCatapult;
 import com.mchelinaval.tileentity.TileEntityMovingPlatform;
@@ -24,6 +25,7 @@ public class ModBlocks {
     // ブロックのインスタンスを静的に保持（他クラスから参照できるようにする）
     public static BlockCatapult CATAPULT;
     public static BlockMovingPlatform MOVING_PLATFORM;
+    public static BlockFloorMarker FLOOR_MARKER;
 
     // クリエイティブタブ
     // createIcon()はゲーム起動後に呼ばれるため、その時点でCATAPULTは登録済みになっている
@@ -43,14 +45,17 @@ public class ModBlocks {
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         CATAPULT         = new BlockCatapult();
         MOVING_PLATFORM  = new BlockMovingPlatform();
+        FLOOR_MARKER     = new BlockFloorMarker();
 
         // クリエイティブタブをセット
         CATAPULT.setCreativeTab(CREATIVE_TAB);
         MOVING_PLATFORM.setCreativeTab(CREATIVE_TAB);
+        FLOOR_MARKER.setCreativeTab(CREATIVE_TAB);
 
         event.getRegistry().registerAll(
             CATAPULT,
-            MOVING_PLATFORM
+            MOVING_PLATFORM,
+            FLOOR_MARKER
         );
 
         // TileEntityも同タイミングで登録する
@@ -65,7 +70,8 @@ public class ModBlocks {
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().registerAll(
             new ItemBlock(CATAPULT).setRegistryName(CATAPULT.getRegistryName()),
-            new ItemBlock(MOVING_PLATFORM).setRegistryName(MOVING_PLATFORM.getRegistryName())
+            new ItemBlock(MOVING_PLATFORM).setRegistryName(MOVING_PLATFORM.getRegistryName()),
+            new ItemBlock(FLOOR_MARKER).setRegistryName(FLOOR_MARKER.getRegistryName())
         );
     }
 }
