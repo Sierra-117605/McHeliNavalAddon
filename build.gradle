@@ -62,3 +62,13 @@ jar {
         ])
     }
 }
+
+// buildするたびにC:\.minecraft\modsへ自動コピー
+task copyToMods(type: Copy, dependsOn: jar) {
+    from jar.archivePath
+    into 'C:/.minecraft/mods'
+    doLast {
+        println ">>> Copied to C:\\.minecraft\\mods"
+    }
+}
+build.finalizedBy copyToMods
