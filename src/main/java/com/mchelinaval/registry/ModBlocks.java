@@ -25,10 +25,13 @@ public class ModBlocks {
     public static BlockCatapult CATAPULT;
     public static BlockMovingPlatform MOVING_PLATFORM;
 
-    // クリエイティブタブ（Naval Addonのタブを独立して作る）
+    // クリエイティブタブ
+    // createIcon()はゲーム起動後に呼ばれるため、その時点でCATAPULTは登録済みになっている
     public static final CreativeTabs CREATIVE_TAB = new CreativeTabs("mchelinaval") {
         @Override
         public net.minecraft.item.ItemStack createIcon() {
+            // CATAPULTがまだnullの場合は空のItemStackを返してクラッシュを防ぐ
+            if (CATAPULT == null) return net.minecraft.item.ItemStack.EMPTY;
             return new net.minecraft.item.ItemStack(CATAPULT);
         }
     };
