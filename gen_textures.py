@@ -76,10 +76,16 @@ def generate_temps():
     make_temp("catapult_side.png",   DARK,  "panel",  GRAY_LT)  # 側面: 機械パネル
     make_temp("catapult_bottom.png", DARK,  "bolts",  GRAY_LT)  # 底面: ボルト
 
-    # 移動プラットフォーム
+    # 移動プラットフォーム（エレベーターコントローラーと共用）
     make_temp("moving_platform_top.png",    IRON, "stripes", YELLOW)   # 上面: 安全ストライプ
     make_temp("moving_platform_side.png",   DARK, "panel",   GRAY_LT)  # 側面: パネル
     make_temp("moving_platform_bottom.png", DARK, "bolts",   GRAY_LT)  # 底面: ボルト
+
+    # JBDコントローラー（オレンジアクセントで区別）
+    ORANGE = (220, 120, 30, 255)
+    make_temp("jbd_controller_top.png",    IRON, "stripes", ORANGE)
+    make_temp("jbd_controller_side.png",   DARK, "panel",   ORANGE)
+    make_temp("jbd_controller_bottom.png", DARK, "bolts",   ORANGE)
 
     print("完了。Gemini画像が届いたら convert コマンドで差し替えてください。")
 

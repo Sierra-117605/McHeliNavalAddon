@@ -17,11 +17,18 @@ public class NavalPacketHandler {
 
     /** パケットを登録する（起動時に一度だけ呼ぶ） */
     public static void register() {
-        // PacketPlatformAction: ID=0, クライアントからサーバーへ送る
+        // PacketPlatformAction: ID=0, ボタン操作（上下・展開格納）
         CHANNEL.registerMessage(
             PacketPlatformAction.Handler.class,
             PacketPlatformAction.class,
             0,
+            Side.SERVER
+        );
+        // PacketSetMimic: ID=1, テクスチャ偽装変更
+        CHANNEL.registerMessage(
+            PacketSetMimic.Handler.class,
+            PacketSetMimic.class,
+            1,
             Side.SERVER
         );
     }

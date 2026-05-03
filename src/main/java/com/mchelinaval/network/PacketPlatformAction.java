@@ -1,7 +1,9 @@
 package com.mchelinaval.network;
 
-import com.mchelinaval.tileentity.TileEntityMovingPlatform;
+import com.mchelinaval.tileentity.TileEntityElevatorController;
+import com.mchelinaval.tileentity.TileEntityJBDController;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -10,22 +12,24 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 /**
- * GUIのボタンを押したときにクライアントからサーバーへ送るパケット。
- * どのブロック位置の、どのアクションかを伝える。
+ * GUIのボタン操作をサーバーへ伝えるパケット。
+ * エレベーター（上へ・下へ）とJBD（展開・格納）を統一的に扱う。
  */
 public class PacketPlatformAction implements IMessage {
 
-    /** GUIボタンの操作種別 */
-    public enum Action { GO_UP, GO_DOWN, TOGGLE, CYCLE_MODE }
+    /** ボタン操作の種別 */
+    public enum Action {
+        ELEVATOR_UP,    // エレベーター: 上のフロアへ
+        ELEVATOR_DOWN,  // エレベーター: 下のフロアへ
+        JBD_DEPLOY,     // JBD: 展開
+        JBD_RETRACT     // JBD: 格納
+    }
 
-    // パケットに含めるデータ（ブロックのXYZ座標とアクション番号）
     private int x, y, z;
     private int actionOrdinal;
 
-    /** デシリアライズ用（引数なしコンストラクタが必須） */
     public PacketPlatformAction() {}
 
-    /** ボタンが押されたとき呼ぶコンストラクタ */
     public PacketPlatformAction(BlockPos pos, Action action) {
         this.x = pos.getX();
         this.y = pos.getY();
@@ -33,58 +37,41 @@ public class PacketPlatformAction implements IMessage {
         this.actionOrdinal = action.ordinal();
     }
 
-    /** バイト列からデータを読み込む（受信時） */
     @Override
     public void fromBytes(ByteBuf buf) {
-        x = buf.readInt();
-        y = buf.readInt();
-        z = buf.readInt();
+        x = buf.readInt(); y = buf.readInt(); z = buf.readInt();
         actionOrdinal = buf.readInt();
     }
 
-    /** データをバイト列に書き込む（送信時） */
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeInt(x);
-        buf.writeInt(y);
-        buf.writeInt(z);
+        buf.writeInt(x); buf.writeInt(y); buf.writeInt(z);
         buf.writeInt(actionOrdinal);
     }
 
-    /**
-     * サーバー側でパケットを受け取ったときの処理。
-     * 指定座標のTileEntityに対してアクションを実行する。
-     */
     public static class Handler implements IMessageHandler<PacketPlatformAction, IMessage> {
 
         @Override
         public IMessage onMessage(PacketPlatformAction message, MessageContext ctx) {
-            // サーバーのメインスレッドで安全に実行するためaddScheduledTaskを使う
             ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
-                World world = ctx.getServerHandler().player.world;
+                World world  = ctx.getServerHandler().player.world;
+                EntityPlayer player = ctx.getServerHandler().player;
                 BlockPos pos = new BlockPos(message.x, message.y, message.z);
                 TileEntity te = world.getTileEntity(pos);
-                if (!(te instanceof TileEntityMovingPlatform)) return;
-
-                TileEntityMovingPlatform platform = (TileEntityMovingPlatform) te;
                 Action action = Action.values()[message.actionOrdinal];
 
-                switch (action) {
-                    case GO_UP:
-                        platform.goUp(ctx.getServerHandler().player);
-                        break;
-                    case GO_DOWN:
-                        platform.goDown(ctx.getServerHandler().player);
-                        break;
-                    case TOGGLE:
-                        platform.toggle();
-                        break;
-                    case CYCLE_MODE:
-                        platform.cycleMode();
-                        break;
+                if (te instanceof TileEntityElevatorController) {
+                    TileEntityElevatorController elev = (TileEntityElevatorController) te;
+                    if (action == Action.ELEVATOR_UP)   elev.goUp(player);
+                    if (action == Action.ELEVATOR_DOWN) elev.goDown(player);
+
+                } else if (te instanceof TileEntityJBDController) {
+                    TileEntityJBDController jbd = (TileEntityJBDController) te;
+                    if (action == Action.JBD_DEPLOY)  jbd.deploy();
+                    if (action == Action.JBD_RETRACT) jbd.retract();
                 }
             });
-            return null; // 返信パケットなし
+            return null;
         }
     }
 }

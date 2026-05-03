@@ -1,4 +1,5 @@
 tile.catapult.name=Catapult
-tile.moving_platform.name=Moving Platform
+tile.elevator_controller.name=Elevator Controller
+tile.jbd_controller.name=JBD Controller
 tile.floor_marker.name=Floor Marker
 itemGroup.mchelinaval=McHeli Naval Addon

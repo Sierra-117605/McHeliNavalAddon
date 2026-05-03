@@ -1,6 +1,8 @@
 package com.mchelinaval.block;
 
-import com.mchelinaval.tileentity.TileEntityFloorMarker;
+import com.mchelinaval.McHeliNavalAddon;
+import com.mchelinaval.gui.NavalGuiHandler;
+import com.mchelinaval.tileentity.TileEntityJBDController;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
@@ -11,46 +13,40 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
 /**
- * フロアマーカーブロック。2つの役割を持つ。
+ * JBD（ジェットブラストデフレクター）コントローラーブロック。
  *
- * 【役割1: 囲むブロック】
- *   エレベーターやJBDの「床」を構成するブロック。
- *   コントローラーの周りに敷き詰めてプラットフォームの面を作る。
- *
- * 【役割2: 止まり目印】
- *   エレベーターコントローラーが同じX/Z列でこのブロックを検索し、
- *   そのY座標でエレベーターが止まる。
+ * 【使い方】
+ *   1. このブロックを1つ設置する
+ *   2. 周りにフロアマーカーを敷いてデフレクター面を作る
+ *   3. 右クリックでGUIを開き「展開」「格納」ボタンで操作
+ *   ※ カタパルトとは独立して手動運用する（自動連動なし）
  *
  * 【テクスチャ偽装】
- *   左クリックでブロックのテクスチャに変更（艦船の床と馴染ませるため）。
- *   TESRが描画するためRenderTypeはINVISIBLE。
- *
- * 【右クリック】
- *   Y座標をチャットに表示（設置確認用）。
+ *   左クリック時に持っているブロックの見た目に変化する
  */
-public class BlockFloorMarker extends Block implements ITileEntityProvider {
+public class BlockJBDController extends Block implements ITileEntityProvider {
 
-    public BlockFloorMarker() {
-        super(Material.GLASS);
-        setTranslationKey("floor_marker");
-        setRegistryName("mchelinaval", "floor_marker");
-        setHardness(0.3f);
-        setLightOpacity(0);
+    public BlockJBDController() {
+        super(Material.IRON);
+        setTranslationKey("jbd_controller");
+        setRegistryName("mchelinaval", "jbd_controller");
+        setHardness(3.0f);
     }
 
-    /** 右クリック：Y座標を表示（確認用） */
+    /** 右クリック：GUIを開く */
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (world.isRemote) return true;
-        player.sendMessage(new TextComponentString(
-            "[Naval] Floor Marker: Y=" + pos.getY() + "  (エレベーターがこのY座標で停止します)"
-        ));
+        if (!(world.getTileEntity(pos) instanceof TileEntityJBDController)) return true;
+
+        player.openGui(McHeliNavalAddon.instance,
+                       NavalGuiHandler.GUI_JBD,
+                       world, pos.getX(), pos.getY(), pos.getZ());
         return true;
     }
 
@@ -68,7 +64,7 @@ public class BlockFloorMarker extends Block implements ITileEntityProvider {
 
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
-        return new TileEntityFloorMarker();
+        return new TileEntityJBDController();
     }
 
     @Override

@@ -1,4 +1,5 @@
 tile.catapult.name=カタパルト
-tile.moving_platform.name=移動プラットフォーム
+tile.elevator_controller.name=エレベーターコントローラー
+tile.jbd_controller.name=JBDコントローラー
 tile.floor_marker.name=フロアマーカー
 itemGroup.mchelinaval=McHeli Naval Addon

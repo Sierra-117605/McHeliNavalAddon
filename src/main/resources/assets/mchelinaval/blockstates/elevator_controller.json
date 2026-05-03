@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "normal": { "model": "mchelinaval:elevator_controller" }
+  }
+}

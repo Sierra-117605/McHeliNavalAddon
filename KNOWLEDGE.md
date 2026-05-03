@@ -4,67 +4,104 @@
 
 ---
 
-## MCHELI 1.1.4 内部情報（解析済み）
+## Forge 1.12.2 / stable_39 マッピング 対応表
 
-### 基本情報
-- jarファイル: `mcheli-1.1.4.jar`
-- 対象MCバージョン: **1.12.2**（"MCHELI 1.14"はMCHELIのバージョン1.1.4のこと。MC 1.14とは別物）
-
-### 機体エンティティ
-- **基底クラス**: `mcheli.aircraft.MCH_EntityAircraft`（abstract）
-- パッケージ: `mcheli.aircraft`
-- 継承: `mcheli.wrapper.W_EntityContainer` → Forgeエンティティ
-
-### 速度フィールド（リフレクションで直接操作可能）
-| フィールド名 | 型 | アクセス修飾子 | 内容 |
-|---|---|---|---|
-| `velocityX` | `double` | `protected` | X方向の速度 |
-| `velocityY` | `double` | `protected` | Y方向の速度 |
-| `velocityZ` | `double` | `protected` | Z方向の速度 |
-| `currentSpeed` | `double` | `public` | 現在の速度スカラー値 |
-| `currentThrottle` | `double` | `private` | 現在のスロットル値 |
-
-### 姿勢フィールド
-| フィールド名 | 型 | 内容 |
-|---|---|---|
-| `aircraftYaw` | `double` | 機首方位（ヨー角）|
-| `aircraftPitch` | `double` | 仰俯角（ピッチ角）|
-| `rotationRoll` | `float` | ロール角 |
-
-### UAV判定
-- `public boolean isUAV()` — UAVかどうかのメソッド
-- `MCH_AircraftInfo.isUAV` — JSONで設定されるフラグ
-- `private mcheli.uav.MCH_EntityUavStation uavStation` — UAVステーション参照
-
-### カタパルト実装方針
-- `velocityX` / `velocityY` / `velocityZ` をリフレクションで書き換えて打ち出し速度を設定する
-- ブロックのfacing方向からXZ速度成分を計算して代入する
-- `protected` フィールドなので `setAccessible(true)` が必要
-
----
-
-## Forge 1.12.2 での注意点
-
-- 設定ファイルは `.cfg`（`@Config` アノテーションまたは `Configuration` クラス）
-- ブロック登録は `GameRegistry.register()` またはイベント経由
-- TileEntity登録も `GameRegistry.registerTileEntity()`
-- `@Mod.EventBusSubscriber` はそのまま使える
-
-### stable_39 マッピングでよくある名前の違い（ハマりポイント）
-| 間違えやすい名前 | 正しい名前（stable_39）|
+| 間違い（古い名前）| 正しい（stable_39）|
 |---|---|
 | `setUnlocalizedName()` | `setTranslationKey()` |
-| `EnumFacing.getHorizontal(int)` | `EnumFacing.byHorizontalIndex(int)` |
-| `facing.getFrontOffsetX()` | `facing.getXOffset()` |
-| `facing.getFrontOffsetZ()` | `facing.getZOffset()` |
 | `net.minecraft.util.SoundEvents` | `net.minecraft.init.SoundEvents` |
-| `CreativeTabs.getTabIconItem()` | `CreativeTabs.createIcon()` （戻り値はItemStackに変更）|
+| `EnumFacing.getHorizontal(int)` | `EnumFacing.byHorizontalIndex(int)` |
+| `getFrontOffsetX/Z()` | `getXOffset()` / `getZOffset()` |
+| `CreativeTabs.getTabIconItem()` | `createIcon()` returning `ItemStack` |
 
 ---
 
-## リフレクションの注意点
+## MCHELI 1.1.4 注意事項
 
-- MCHELIのフィールドアクセスは必ず `try-catch (Exception e)` で保護する
-- `Field.setAccessible(true)` はフィールドごとに初回のみ呼び出してキャッシュする
-- `protected` フィールドも `setAccessible(true)` で外部からアクセス可能
-- MCHELIのバージョンアップでフィールド名が変わった場合、ここに新旧対応を記録する
+- jarのファイル名: `mcheli-1.1.4.jar`（"MCHELI 1.14" という表記はバージョン1.1.4を指す。MC 1.14ではない）
+- 速度フィールド: `velocityX`, `velocityY`, `velocityZ`（`MCH_EntityAircraft` クラス）
+- リフレクション必須: フィールドはprivateなので `setAccessible(true)` でアクセス
+
+---
+
+## ブロック・TileEntityの設計パターン
+
+### TileEntity付きブロック
+```java
+// ブロック破壊時にTileEntityをリセットしない
+@Override
+public boolean shouldRefresh(World world, BlockPos pos, IBlockState old, IBlockState nw) {
+    return old.getBlock() != nw.getBlock();
+}
+```
+
+### テクスチャ偽装（カモフラージュ）機能
+- ブロックの `getRenderType()` を `INVISIBLE` にする
+- TileEntitySpecialRenderer（TESR）に `BlockModelRenderer.renderModel()` で描画させる
+- TileEntityに偽装ブロック状態（`IBlockState mimicState`）を保持・NBT保存する
+- 左クリックはクライアント側 `PlayerInteractEvent.LeftClickBlock` で捕捉 → `PacketSetMimic` 送信
+- TESR登録は `@SidedProxy` + `ClientProxy` で行う（サーバーで `@SideOnly(CLIENT)` コードを実行しないため）
+
+### TESRレンダリング（BlockModelRenderer）
+```java
+brd.getBlockModelRenderer().renderModel(
+    world,                                             // ワールド（光計算用）
+    brd.getBlockModelShapes().getModelForState(state), // モデル
+    state,                                             // ブロック状態
+    te.getPos(),                                       // ワールド座標
+    bufferBuilder,
+    false                                              // AO計算スキップ
+);
+```
+
+---
+
+## イベントバス
+
+| 用途 | 方法 |
+|---|---|
+| ブロック・アイテム登録 | `@Mod.EventBusSubscriber` + `@SubscribeEvent` (MinecraftForge EVENT_BUS) |
+| クライアント専用Forgeイベント | `@Mod.EventBusSubscriber(value = Side.CLIENT)` |
+| TESR登録 | `ClientProxy.registerTileEntityRenderers()` via `@SidedProxy` |
+| GUIハンドラ登録 | `NetworkRegistry.INSTANCE.registerGuiHandler()` in `init()` |
+
+---
+
+## ネットワーク通信
+
+- `SimpleNetworkWrapper` を `NetworkRegistry.INSTANCE.newSimpleChannel(MODID)` で作成
+- パケットIDは登録順（0, 1, 2...）で重複禁止
+- `addScheduledTask()` でサーバーメインスレッドで実行する
+
+---
+
+## ビルド環境
+
+- `gradlew.bat` は `C:\dev\McHeliWingman\` からコピーして使用
+- MCHELI jarはGitHub管理外（`.gitignore` に `libs/*.jar`）
+- `build.finalizedBy copyToMods` で `C:\.minecraft\mods` に自動コピー
+
+---
+
+## フロアマーカー注意
+
+- `isFullCube = true` にしないとブロックを上に積めない（過去にハマった）
+- `getRenderType = INVISIBLE` でもモデルは登録される（TESR用に必要）
+- TileEntityが必要（偽装機能のため）→ `ITileEntityProvider` を実装すること
+
+---
+
+## 囲むブロック設計（v2以降）
+
+- **エレベーター**: コントローラー1個 + フロアマーカーを各フロアの床に敷く
+  - コントローラーが同X/Z列のフロアマーカーYを検索して停止位置にする
+  - エンティティはコントローラー周辺の `range` 内のものを全部移動（プレイヤー + MCHELI機体）
+- **JBD**: コントローラー1個 + フロアマーカーをデフレクター面に敷く
+  - GUIから手動展開/格納（カタパルトとの自動連動なし）
+
+---
+
+## 旧コードとの互換性
+
+- `BlockMovingPlatform` / `TileEntityMovingPlatform` はv2でも削除していない（コンパイルのみ、未登録）
+- `NavalGuiHandler.GUI_MOVING_PLATFORM` は `@Deprecated` として残存（旧ファイルのコンパイル通過のため）

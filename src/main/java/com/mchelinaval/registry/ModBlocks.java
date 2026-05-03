@@ -2,10 +2,13 @@ package com.mchelinaval.registry;
 
 import com.mchelinaval.McHeliNavalAddon;
 import com.mchelinaval.block.BlockCatapult;
+import com.mchelinaval.block.BlockElevatorController;
 import com.mchelinaval.block.BlockFloorMarker;
-import com.mchelinaval.block.BlockMovingPlatform;
+import com.mchelinaval.block.BlockJBDController;
 import com.mchelinaval.tileentity.TileEntityCatapult;
-import com.mchelinaval.tileentity.TileEntityMovingPlatform;
+import com.mchelinaval.tileentity.TileEntityElevatorController;
+import com.mchelinaval.tileentity.TileEntityFloorMarker;
+import com.mchelinaval.tileentity.TileEntityJBDController;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
@@ -17,60 +20,67 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 /**
  * ブロックとTileEntityの登録をまとめるクラス。
- * ForgeのRegistryEventを使って登録する（1.12.2の推奨方式）。
+ *
+ * 【登録ブロック一覧】
+ *   CATAPULT            : カタパルト（機体を射出）
+ *   ELEVATOR_CONTROLLER : エレベーターコントローラー（コントローラー）
+ *   JBD_CONTROLLER      : JBDコントローラー（コントローラー）
+ *   FLOOR_MARKER        : フロアマーカー（囲むブロック＋止まり目印）
  */
 @Mod.EventBusSubscriber(modid = McHeliNavalAddon.MODID)
 public class ModBlocks {
 
-    // ブロックのインスタンスを静的に保持（他クラスから参照できるようにする）
-    public static BlockCatapult CATAPULT;
-    public static BlockMovingPlatform MOVING_PLATFORM;
-    public static BlockFloorMarker FLOOR_MARKER;
+    public static BlockCatapult            CATAPULT;
+    public static BlockElevatorController  ELEVATOR_CONTROLLER;
+    public static BlockJBDController       JBD_CONTROLLER;
+    public static BlockFloorMarker         FLOOR_MARKER;
 
-    // クリエイティブタブ
-    // createIcon()はゲーム起動後に呼ばれるため、その時点でCATAPULTは登録済みになっている
     public static final CreativeTabs CREATIVE_TAB = new CreativeTabs("mchelinaval") {
         @Override
         public net.minecraft.item.ItemStack createIcon() {
-            // CATAPULTがまだnullの場合は空のItemStackを返してクラッシュを防ぐ
             if (CATAPULT == null) return net.minecraft.item.ItemStack.EMPTY;
             return new net.minecraft.item.ItemStack(CATAPULT);
         }
     };
 
     // -------------------------------------------------------
-    // ブロック登録イベント
+    // ブロック登録
     // -------------------------------------------------------
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
-        CATAPULT         = new BlockCatapult();
-        MOVING_PLATFORM  = new BlockMovingPlatform();
-        FLOOR_MARKER     = new BlockFloorMarker();
+        CATAPULT            = new BlockCatapult();
+        ELEVATOR_CONTROLLER = new BlockElevatorController();
+        JBD_CONTROLLER      = new BlockJBDController();
+        FLOOR_MARKER        = new BlockFloorMarker();
 
-        // クリエイティブタブをセット
         CATAPULT.setCreativeTab(CREATIVE_TAB);
-        MOVING_PLATFORM.setCreativeTab(CREATIVE_TAB);
+        ELEVATOR_CONTROLLER.setCreativeTab(CREATIVE_TAB);
+        JBD_CONTROLLER.setCreativeTab(CREATIVE_TAB);
         FLOOR_MARKER.setCreativeTab(CREATIVE_TAB);
 
         event.getRegistry().registerAll(
             CATAPULT,
-            MOVING_PLATFORM,
+            ELEVATOR_CONTROLLER,
+            JBD_CONTROLLER,
             FLOOR_MARKER
         );
 
-        // TileEntityも同タイミングで登録する
-        GameRegistry.registerTileEntity(TileEntityCatapult.class,       "mchelinaval:catapult_te");
-        GameRegistry.registerTileEntity(TileEntityMovingPlatform.class,  "mchelinaval:moving_platform_te");
+        // TileEntityを登録
+        GameRegistry.registerTileEntity(TileEntityCatapult.class,           "mchelinaval:catapult_te");
+        GameRegistry.registerTileEntity(TileEntityElevatorController.class,  "mchelinaval:elevator_te");
+        GameRegistry.registerTileEntity(TileEntityJBDController.class,       "mchelinaval:jbd_te");
+        GameRegistry.registerTileEntity(TileEntityFloorMarker.class,         "mchelinaval:floor_marker_te");
     }
 
     // -------------------------------------------------------
-    // アイテム登録イベント（ブロックをインベントリに持てるようにする）
+    // アイテム登録（インベントリに持てるようにする）
     // -------------------------------------------------------
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().registerAll(
             new ItemBlock(CATAPULT).setRegistryName(CATAPULT.getRegistryName()),
-            new ItemBlock(MOVING_PLATFORM).setRegistryName(MOVING_PLATFORM.getRegistryName()),
+            new ItemBlock(ELEVATOR_CONTROLLER).setRegistryName(ELEVATOR_CONTROLLER.getRegistryName()),
+            new ItemBlock(JBD_CONTROLLER).setRegistryName(JBD_CONTROLLER.getRegistryName()),
             new ItemBlock(FLOOR_MARKER).setRegistryName(FLOOR_MARKER.getRegistryName())
         );
     }

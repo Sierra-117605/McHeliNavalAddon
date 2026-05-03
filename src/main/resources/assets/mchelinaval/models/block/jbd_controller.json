@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "up":      "mchelinaval:blocks/jbd_controller_top",
+    "down":    "mchelinaval:blocks/jbd_controller_bottom",
+    "north":   "mchelinaval:blocks/jbd_controller_side",
+    "south":   "mchelinaval:blocks/jbd_controller_side",
+    "east":    "mchelinaval:blocks/jbd_controller_side",
+    "west":    "mchelinaval:blocks/jbd_controller_side",
+    "particle":"mchelinaval:blocks/jbd_controller_side"
+  }
+}
