@@ -1,7 +1,6 @@
 package com.mchelinaval.proxy;
 
 import com.mchelinaval.client.TESRCamouflage;
-import com.mchelinaval.registry.ModBlocks;
 import com.mchelinaval.tileentity.TileEntityElevatorController;
 import com.mchelinaval.tileentity.TileEntityFloorMarker;
 import com.mchelinaval.tileentity.TileEntityJBDController;
@@ -11,25 +10,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * クライアント専用のプロキシ。
- * サーバーでは呼ばれない処理（TESR登録など）をここで行う。
+ * TESR（テクスチャ偽装レンダラー）の登録を行う。
  */
 @SideOnly(Side.CLIENT)
 public class ClientProxy extends CommonProxy {
 
     @Override
     public void registerTileEntityRenderers() {
-        // 3ブロック全てにテクスチャ偽装レンダラーを登録する
         ClientRegistry.bindTileEntitySpecialRenderer(
-            TileEntityFloorMarker.class,
-            new TESRCamouflage<>(ModBlocks.FLOOR_MARKER)
-        );
+            TileEntityFloorMarker.class,         new TESRCamouflage<>());
         ClientRegistry.bindTileEntitySpecialRenderer(
-            TileEntityElevatorController.class,
-            new TESRCamouflage<>(ModBlocks.ELEVATOR_CONTROLLER)
-        );
+            TileEntityElevatorController.class,  new TESRCamouflage<>());
         ClientRegistry.bindTileEntitySpecialRenderer(
-            TileEntityJBDController.class,
-            new TESRCamouflage<>(ModBlocks.JBD_CONTROLLER)
-        );
+            TileEntityJBDController.class,       new TESRCamouflage<>());
     }
 }

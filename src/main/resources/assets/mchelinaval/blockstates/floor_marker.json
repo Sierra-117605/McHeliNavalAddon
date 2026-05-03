@@ -1,5 +1,6 @@
 {
   "variants": {
-    "normal": { "model": "mchelinaval:floor_marker" }
+    "disguised=false": { "model": "mchelinaval:floor_marker" },
+    "disguised=true":  { "model": "mchelinaval:floor_marker" }
   }
 }

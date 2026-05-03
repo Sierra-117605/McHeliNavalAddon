@@ -1,5 +1,6 @@
 {
   "variants": {
-    "normal": { "model": "mchelinaval:elevator_controller" }
+    "disguised=false": { "model": "mchelinaval:elevator_controller" },
+    "disguised=true":  { "model": "mchelinaval:elevator_controller" }
   }
 }
