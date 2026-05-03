@@ -4,6 +4,74 @@
 
 ---
 
+## ★重要★ onBlockActivated とスニーク+アイテムの Vanilla 仕様
+
+### 問題
+スニーク中にアイテムを持っていると、Minecraft はサーバー側の
+`onBlockActivated` を**呼ばない**。
+
+```java
+// PlayerInteractionManager.processRightClickBlock（Vanilla コード）
+if (!player.isSneaking() || player.getHeldItemMainhand().isEmpty() && player.getHeldItemOffhand().isEmpty()) {
+    block.onBlockActivated(...);  // ← スニーク+アイテム持ちのとき呼ばれない
+}
+```
+
+### 結果
+「Shift+右クリックでテクスチャ偽装」という設計が根本的に動かない。
+クライアント側は `return true` するが、サーバー側の処理が実行されない。
+
+### 正しい設計
+- ブロックを持って右クリック（スニーク不要） → テクスチャ偽装
+- 何も持たずに右クリック → GUI / 情報表示
+
+---
+
+## ★重要★ IBlockState.withProperty() はブロック間で共有できない
+
+### 問題
+`PropertyBool.create("disguised")` を3ブロックそれぞれで呼ぶと
+**3つの別インスタンス**ができる。
+FloorMarker の DISGUISED インスタンスを ElevatorController の
+`IBlockState.withProperty()` に渡すと `IllegalArgumentException`。
+
+### 正しい取得方法
+プロパティを名前で動的検索する：
+
+```java
+PropertyBool disguisedProp = null;
+for (IProperty<?> p : state.getPropertyKeys()) {
+    if ("disguised".equals(p.getName()) && p instanceof PropertyBool) {
+        disguisedProp = (PropertyBool) p;
+        break;
+    }
+}
+if (disguisedProp != null) {
+    world.setBlockState(pos, state.withProperty(disguisedProp, newValue), 3);
+}
+```
+
+---
+
+## ★重要★ TESRCamouflage の renderModel 座標
+
+### 問題
+`renderModel(world, model, state, te.getPos(), buf, false)` と書くと
+ワールド座標（例: 100,64,200）分だけ頂点がオフセットされる。
+GL行列もカメラ相対オフセット分 translate 済みなので **二重オフセット** になり
+偽装テクスチャが遥か遠くに描画される。
+
+### 正しい書き方
+```java
+brd.getBlockModelRenderer().renderModel(
+    world, model, state,
+    BlockPos.ORIGIN,   // ← te.getPos() ではなく ORIGIN
+    buf, false
+);
+```
+
+---
+
 ## Forge 1.12.2 / stable_39 マッピング 対応表
 
 | 間違い（古い名前）| 正しい（stable_39）|
