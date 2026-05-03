@@ -11,6 +11,8 @@ import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
@@ -21,14 +23,9 @@ import net.minecraft.world.World;
 /**
  * エレベーターコントローラーブロック。
  *
- * 【使い方】
- *   1. このブロックを1つ設置する
- *   2. 止まりたい各フロアの床にフロアマーカーを敷く
- *   3. 右クリックでGUIを開き「▲ 上へ」「▼ 下へ」ボタンで移動
- *
- * 【テクスチャ偽装】
- *   Shift+右クリック（ブロックを持っている状態）→ そのブロックの見た目に変化
- *   Shift+右クリック（何も持っていない）         → 元の見た目に戻す
+ * 【操作方法】
+ *   ブロックを持って右クリック → そのブロックの見た目に偽装
+ *   何も持たずに右クリック    → GUIを開く（上へ・下へ）
  */
 public class BlockElevatorController extends Block implements ITileEntityProvider {
 
@@ -40,7 +37,6 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
         setRegistryName("mchelinaval", "elevator_controller");
         setHardness(3.0f);
         setDefaultState(blockState.getBaseState().withProperty(DISGUISED, false));
-        McHeliNavalAddon.logger.info("[Block] BlockElevatorController コンストラクタ完了");
     }
 
     @Override
@@ -77,36 +73,40 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
-        McHeliNavalAddon.logger.info("[Elevator] onBlockActivated @ {} isRemote={} sneaking={}",
-            pos, world.isRemote, player.isSneaking());
-
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
-        McHeliNavalAddon.logger.info("[Elevator] TileEntity @ {} : {}",
-            pos, te == null ? "null!" : te.getClass().getSimpleName());
+        McHeliNavalAddon.logger.info("[Elevator] 右クリック @ {} TE={} hand={}",
+            pos,
+            te == null ? "null!" : te.getClass().getSimpleName(),
+            hand);
 
         if (!(te instanceof TileEntityElevatorController)) {
-            McHeliNavalAddon.logger.warn("[Elevator] TileEntityが TileEntityElevatorController でない → スキップ");
+            McHeliNavalAddon.logger.warn("[Elevator] TileEntityElevatorController でない → スキップ");
             return true;
         }
 
-        if (player.isSneaking()) {
-            McHeliNavalAddon.logger.info("[Elevator] Shift+右クリック → applyMimic 呼び出し");
+        ItemStack held = player.getHeldItem(hand);
+
+        if (!held.isEmpty() && held.getItem() instanceof ItemBlock) {
+            // ===== ブロックを持って右クリック → テクスチャ偽装 =====
+            McHeliNavalAddon.logger.info("[Elevator] ブロック持ち右クリック → applyMimic (held={})",
+                held.getDisplayName());
             BlockFloorMarker.applyMimic(world, pos, state, (IHasMimic) te, player, hand);
         } else {
-            McHeliNavalAddon.logger.info("[Elevator] 右クリック → GUI_ELEVATOR={} を openGui", NavalGuiHandler.GUI_ELEVATOR);
+            // ===== 空手（または非ブロックアイテム）で右クリック → GUIを開く =====
+            McHeliNavalAddon.logger.info("[Elevator] 空手右クリック → GUI_ELEVATOR={} を openGui",
+                NavalGuiHandler.GUI_ELEVATOR);
             player.openGui(McHeliNavalAddon.instance,
                            NavalGuiHandler.GUI_ELEVATOR,
                            world, pos.getX(), pos.getY(), pos.getZ());
-            McHeliNavalAddon.logger.info("[Elevator] openGui 呼び出し完了");
         }
         return true;
     }
 
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
-        McHeliNavalAddon.logger.info("[Elevator] createNewTileEntity @ meta={}", meta);
+        McHeliNavalAddon.logger.info("[Elevator] createNewTileEntity");
         return new TileEntityElevatorController();
     }
 
