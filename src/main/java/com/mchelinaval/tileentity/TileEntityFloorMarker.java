@@ -1,5 +1,6 @@
 package com.mchelinaval.tileentity;
 
+import com.mchelinaval.McHeliNavalAddon;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -31,6 +32,10 @@ public class TileEntityFloorMarker extends TileEntity implements IHasMimic {
 
     @Override
     public void setMimicState(IBlockState state) {
+        McHeliNavalAddon.logger.info("[FloorMarkerTE] setMimicState @ {} : {} → {}",
+            pos,
+            mimicState == null ? "null" : mimicState.getBlock().getRegistryName(),
+            state      == null ? "null" : state.getBlock().getRegistryName());
         this.mimicState = state;
         markDirty();
         syncToClient();
@@ -76,6 +81,7 @@ public class TileEntityFloorMarker extends TileEntity implements IHasMimic {
         if (world != null && !world.isRemote) {
             IBlockState state = world.getBlockState(pos);
             world.notifyBlockUpdate(pos, state, state, 3);
+            McHeliNavalAddon.logger.info("[FloorMarkerTE] syncToClient 送信 @ {}", pos);
         }
     }
 

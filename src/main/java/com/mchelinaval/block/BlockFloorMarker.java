@@ -1,5 +1,6 @@
 package com.mchelinaval.block;
 
+import com.mchelinaval.McHeliNavalAddon;
 import com.mchelinaval.tileentity.IHasMimic;
 import com.mchelinaval.tileentity.TileEntityFloorMarker;
 import net.minecraft.block.Block;
@@ -24,7 +25,6 @@ import net.minecraft.world.World;
  *
  * 【役割1: 囲むブロック】
  *   エレベーターやJBDの床を構成するブロック。
- *   コントローラーの周りに敷き詰めてプラットフォームの面を作る。
  *
  * 【役割2: 止まり目印】
  *   エレベーターコントローラーが同X/Z列のこのブロックを探して停止位置にする。
@@ -38,11 +38,6 @@ import net.minecraft.world.World;
  */
 public class BlockFloorMarker extends Block implements ITileEntityProvider {
 
-    /**
-     * 偽装モードフラグ。
-     * false = 通常描画（自分のテクスチャ）
-     * true  = INVISIBLE（TESRが偽装テクスチャを描画）
-     */
     public static final PropertyBool DISGUISED = PropertyBool.create("disguised");
 
     public BlockFloorMarker() {
@@ -52,6 +47,7 @@ public class BlockFloorMarker extends Block implements ITileEntityProvider {
         setHardness(0.3f);
         setLightOpacity(0);
         setDefaultState(blockState.getBaseState().withProperty(DISGUISED, false));
+        McHeliNavalAddon.logger.info("[Block] BlockFloorMarker コンストラクタ完了");
     }
 
     @Override
@@ -69,15 +65,10 @@ public class BlockFloorMarker extends Block implements ITileEntityProvider {
         return state.getValue(DISGUISED) ? 1 : 0;
     }
 
-    /**
-     * 通常時 → MODEL（自分のテクスチャで描画）
-     * 偽装時 → INVISIBLE（TESRに任せる）
-     */
     @Override
     public EnumBlockRenderType getRenderType(IBlockState state) {
-        return state.getValue(DISGUISED)
-            ? EnumBlockRenderType.INVISIBLE
-            : EnumBlockRenderType.MODEL;
+        boolean disguised = state.getValue(DISGUISED);
+        return disguised ? EnumBlockRenderType.INVISIBLE : EnumBlockRenderType.MODEL;
     }
 
     @Override
@@ -90,16 +81,25 @@ public class BlockFloorMarker extends Block implements ITileEntityProvider {
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
+        McHeliNavalAddon.logger.info("[FloorMarker] onBlockActivated @ {} isRemote={} sneaking={}",
+            pos, world.isRemote, player.isSneaking());
+
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
-        if (!(te instanceof TileEntityFloorMarker)) return true;
+        McHeliNavalAddon.logger.info("[FloorMarker] TileEntity @ {} : {}",
+            pos, te == null ? "null!" : te.getClass().getSimpleName());
+
+        if (!(te instanceof TileEntityFloorMarker)) {
+            McHeliNavalAddon.logger.warn("[FloorMarker] TileEntityが TileEntityFloorMarker でない → スキップ");
+            return true;
+        }
 
         if (player.isSneaking()) {
-            // ===== Shift+右クリック：テクスチャ偽装 =====
+            McHeliNavalAddon.logger.info("[FloorMarker] Shift+右クリック → applyMimic 呼び出し");
             applyMimic(world, pos, state, (IHasMimic) te, player, hand);
         } else {
-            // ===== 右クリック：Y座標を表示 =====
+            McHeliNavalAddon.logger.info("[FloorMarker] 右クリック → Y座標表示");
             player.sendMessage(new TextComponentString(
                 "[Naval] Floor Marker: Y=" + pos.getY() + "  (エレベーターがこのY座標で停止します)"
             ));
@@ -108,40 +108,54 @@ public class BlockFloorMarker extends Block implements ITileEntityProvider {
     }
 
     /**
-     * テクスチャ偽装を適用する。
+     * テクスチャ偽装を適用する（ElevatorController・JBDControllerからも呼ばれる）。
      * ブロックを持って呼ぶ → そのブロックの見た目に変化
      * 何も持たずに呼ぶ    → 偽装を解除して元の見た目に戻る
      */
     static void applyMimic(World world, BlockPos pos, IBlockState state,
                             IHasMimic te, EntityPlayer player, EnumHand hand) {
-        ItemStack held = player.getHeldItem(hand);
 
-        net.minecraft.block.state.IBlockState mimic = null;
+        ItemStack held = player.getHeldItem(hand);
+        McHeliNavalAddon.logger.info("[Mimic] applyMimic @ {} held={} isEmpty={}",
+            pos,
+            held.isEmpty() ? "（空）" : held.getDisplayName(),
+            held.isEmpty());
+
+        IBlockState mimic = null;
         if (!held.isEmpty() && held.getItem() instanceof ItemBlock) {
             Block mimicBlock = ((ItemBlock) held.getItem()).getBlock();
             mimic = mimicBlock.getDefaultState();
+            McHeliNavalAddon.logger.info("[Mimic] 偽装ブロック決定: {}", mimicBlock.getRegistryName());
+        } else {
+            McHeliNavalAddon.logger.info("[Mimic] 持ちアイテムがブロックでないか空 → 偽装解除");
         }
 
         // TileEntityに偽装ブロック状態をセット
         te.setMimicState(mimic);
 
-        // ブロックの描画モードを切り替える（偽装あり=INVISIBLE、なし=MODEL）
-        IBlockState newState = state.withProperty(DISGUISED, mimic != null);
+        // ブロックの描画モードを切り替える（disguised=trueでINVISIBLE → TESRが描画）
+        boolean newDisguised = (mimic != null);
+        IBlockState newState = state.withProperty(BlockFloorMarker.DISGUISED, newDisguised);
+        McHeliNavalAddon.logger.info("[Mimic] ブロック状態変更: disguised {} → {} (変化あり={})",
+            state.getValue(BlockFloorMarker.DISGUISED), newDisguised, (newState != state));
+
         if (newState != state) {
-            world.setBlockState(pos, newState, 3);  // 3 = クライアントへ通知
+            world.setBlockState(pos, newState, 3);
+        } else {
+            McHeliNavalAddon.logger.info("[Mimic] ブロック状態に変化なし → setBlockState スキップ");
         }
 
-        // 確認メッセージ
-        if (player instanceof EntityPlayer) {
-            String msg = mimic != null
-                ? "[Naval] 偽装: " + held.getDisplayName() + " の見た目に変更"
-                : "[Naval] 偽装を解除しました";
-            ((EntityPlayer) player).sendMessage(new TextComponentString(msg));
-        }
+        // チャットに確認メッセージ
+        String msg = mimic != null
+            ? "[Naval] 偽装: " + held.getDisplayName() + " の見た目に変更"
+            : "[Naval] 偽装を解除しました";
+        player.sendMessage(new TextComponentString(msg));
+        McHeliNavalAddon.logger.info("[Mimic] 完了: {}", msg);
     }
 
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
+        McHeliNavalAddon.logger.info("[FloorMarker] createNewTileEntity @ meta={}", meta);
         return new TileEntityFloorMarker();
     }
 

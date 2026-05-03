@@ -25,7 +25,7 @@ import net.minecraft.world.World;
  *   1. このブロックを1つ設置する
  *   2. 周りにフロアマーカーを敷いてデフレクター面を作る
  *   3. 右クリックでGUIを開き「展開」「格納」ボタンで操作
- *   ※ カタパルトとは独立して手動運用する
+ *   ※ カタパルトに隣接して置くと自動連動する
  *
  * 【テクスチャ偽装】
  *   Shift+右クリック（ブロックを持っている状態）→ そのブロックの見た目に変化
@@ -33,7 +33,6 @@ import net.minecraft.world.World;
  */
 public class BlockJBDController extends Block implements ITileEntityProvider {
 
-    /** 偽装モードフラグ */
     public static final PropertyBool DISGUISED = PropertyBool.create("disguised");
 
     public BlockJBDController() {
@@ -42,6 +41,7 @@ public class BlockJBDController extends Block implements ITileEntityProvider {
         setRegistryName("mchelinaval", "jbd_controller");
         setHardness(3.0f);
         setDefaultState(blockState.getBaseState().withProperty(DISGUISED, false));
+        McHeliNavalAddon.logger.info("[Block] BlockJBDController コンストラクタ完了");
     }
 
     @Override
@@ -78,25 +78,36 @@ public class BlockJBDController extends Block implements ITileEntityProvider {
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
+        McHeliNavalAddon.logger.info("[JBD] onBlockActivated @ {} isRemote={} sneaking={}",
+            pos, world.isRemote, player.isSneaking());
+
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
-        if (!(te instanceof TileEntityJBDController)) return true;
+        McHeliNavalAddon.logger.info("[JBD] TileEntity @ {} : {}",
+            pos, te == null ? "null!" : te.getClass().getSimpleName());
+
+        if (!(te instanceof TileEntityJBDController)) {
+            McHeliNavalAddon.logger.warn("[JBD] TileEntityが TileEntityJBDController でない → スキップ");
+            return true;
+        }
 
         if (player.isSneaking()) {
-            // ===== Shift+右クリック：テクスチャ偽装 =====
+            McHeliNavalAddon.logger.info("[JBD] Shift+右クリック → applyMimic 呼び出し");
             BlockFloorMarker.applyMimic(world, pos, state, (IHasMimic) te, player, hand);
         } else {
-            // ===== 右クリック：GUIを開く =====
+            McHeliNavalAddon.logger.info("[JBD] 右クリック → GUI_JBD={} を openGui", NavalGuiHandler.GUI_JBD);
             player.openGui(McHeliNavalAddon.instance,
                            NavalGuiHandler.GUI_JBD,
                            world, pos.getX(), pos.getY(), pos.getZ());
+            McHeliNavalAddon.logger.info("[JBD] openGui 呼び出し完了");
         }
         return true;
     }
 
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
+        McHeliNavalAddon.logger.info("[JBD] createNewTileEntity @ meta={}", meta);
         return new TileEntityJBDController();
     }
 

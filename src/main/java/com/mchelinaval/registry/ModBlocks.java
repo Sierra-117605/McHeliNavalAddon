@@ -20,12 +20,6 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 /**
  * ブロックとTileEntityの登録をまとめるクラス。
- *
- * 【登録ブロック一覧】
- *   CATAPULT            : カタパルト（機体を射出）
- *   ELEVATOR_CONTROLLER : エレベーターコントローラー（コントローラー）
- *   JBD_CONTROLLER      : JBDコントローラー（コントローラー）
- *   FLOOR_MARKER        : フロアマーカー（囲むブロック＋止まり目印）
  */
 @Mod.EventBusSubscriber(modid = McHeliNavalAddon.MODID)
 public class ModBlocks {
@@ -43,11 +37,10 @@ public class ModBlocks {
         }
     };
 
-    // -------------------------------------------------------
-    // ブロック登録
-    // -------------------------------------------------------
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        McHeliNavalAddon.logger.info("[ModBlocks] ブロック登録開始");
+
         CATAPULT            = new BlockCatapult();
         ELEVATOR_CONTROLLER = new BlockElevatorController();
         JBD_CONTROLLER      = new BlockJBDController();
@@ -64,24 +57,33 @@ public class ModBlocks {
             JBD_CONTROLLER,
             FLOOR_MARKER
         );
+        McHeliNavalAddon.logger.info("[ModBlocks] ブロック4種 Registry 登録完了");
 
         // TileEntityを登録
-        GameRegistry.registerTileEntity(TileEntityCatapult.class,           "mchelinaval:catapult_te");
-        GameRegistry.registerTileEntity(TileEntityElevatorController.class,  "mchelinaval:elevator_te");
-        GameRegistry.registerTileEntity(TileEntityJBDController.class,       "mchelinaval:jbd_te");
-        GameRegistry.registerTileEntity(TileEntityFloorMarker.class,         "mchelinaval:floor_marker_te");
+        GameRegistry.registerTileEntity(TileEntityCatapult.class,          "mchelinaval:catapult_te");
+        McHeliNavalAddon.logger.info("[ModBlocks] TE登録: catapult_te");
+
+        GameRegistry.registerTileEntity(TileEntityElevatorController.class, "mchelinaval:elevator_te");
+        McHeliNavalAddon.logger.info("[ModBlocks] TE登録: elevator_te");
+
+        GameRegistry.registerTileEntity(TileEntityJBDController.class,      "mchelinaval:jbd_te");
+        McHeliNavalAddon.logger.info("[ModBlocks] TE登録: jbd_te");
+
+        GameRegistry.registerTileEntity(TileEntityFloorMarker.class,        "mchelinaval:floor_marker_te");
+        McHeliNavalAddon.logger.info("[ModBlocks] TE登録: floor_marker_te");
+
+        McHeliNavalAddon.logger.info("[ModBlocks] 全登録完了（ブロック4種 + TE4種）");
     }
 
-    // -------------------------------------------------------
-    // アイテム登録（インベントリに持てるようにする）
-    // -------------------------------------------------------
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
+        McHeliNavalAddon.logger.info("[ModBlocks] ItemBlock登録開始");
         event.getRegistry().registerAll(
             new ItemBlock(CATAPULT).setRegistryName(CATAPULT.getRegistryName()),
             new ItemBlock(ELEVATOR_CONTROLLER).setRegistryName(ELEVATOR_CONTROLLER.getRegistryName()),
             new ItemBlock(JBD_CONTROLLER).setRegistryName(JBD_CONTROLLER.getRegistryName()),
             new ItemBlock(FLOOR_MARKER).setRegistryName(FLOOR_MARKER.getRegistryName())
         );
+        McHeliNavalAddon.logger.info("[ModBlocks] ItemBlock4種 登録完了");
     }
 }

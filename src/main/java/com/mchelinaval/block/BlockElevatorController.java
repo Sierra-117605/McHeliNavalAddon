@@ -23,7 +23,7 @@ import net.minecraft.world.World;
  *
  * 【使い方】
  *   1. このブロックを1つ設置する
- *   2. 止まりたい各フロアの床にフロアマーカーを敷く（プラットフォームの床になる）
+ *   2. 止まりたい各フロアの床にフロアマーカーを敷く
  *   3. 右クリックでGUIを開き「▲ 上へ」「▼ 下へ」ボタンで移動
  *
  * 【テクスチャ偽装】
@@ -32,7 +32,6 @@ import net.minecraft.world.World;
  */
 public class BlockElevatorController extends Block implements ITileEntityProvider {
 
-    /** 偽装モードフラグ */
     public static final PropertyBool DISGUISED = PropertyBool.create("disguised");
 
     public BlockElevatorController() {
@@ -41,6 +40,7 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
         setRegistryName("mchelinaval", "elevator_controller");
         setHardness(3.0f);
         setDefaultState(blockState.getBaseState().withProperty(DISGUISED, false));
+        McHeliNavalAddon.logger.info("[Block] BlockElevatorController コンストラクタ完了");
     }
 
     @Override
@@ -67,7 +67,7 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
-        return !state.getValue(DISGUISED); // 偽装時は非不透明（TESR描画のため）
+        return !state.getValue(DISGUISED);
     }
 
     @Override
@@ -77,25 +77,36 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state,
                                      EntityPlayer player, EnumHand hand,
                                      EnumFacing facing, float hitX, float hitY, float hitZ) {
+        McHeliNavalAddon.logger.info("[Elevator] onBlockActivated @ {} isRemote={} sneaking={}",
+            pos, world.isRemote, player.isSneaking());
+
         if (world.isRemote) return true;
 
         TileEntity te = world.getTileEntity(pos);
-        if (!(te instanceof TileEntityElevatorController)) return true;
+        McHeliNavalAddon.logger.info("[Elevator] TileEntity @ {} : {}",
+            pos, te == null ? "null!" : te.getClass().getSimpleName());
+
+        if (!(te instanceof TileEntityElevatorController)) {
+            McHeliNavalAddon.logger.warn("[Elevator] TileEntityが TileEntityElevatorController でない → スキップ");
+            return true;
+        }
 
         if (player.isSneaking()) {
-            // ===== Shift+右クリック：テクスチャ偽装 =====
+            McHeliNavalAddon.logger.info("[Elevator] Shift+右クリック → applyMimic 呼び出し");
             BlockFloorMarker.applyMimic(world, pos, state, (IHasMimic) te, player, hand);
         } else {
-            // ===== 右クリック：GUIを開く =====
+            McHeliNavalAddon.logger.info("[Elevator] 右クリック → GUI_ELEVATOR={} を openGui", NavalGuiHandler.GUI_ELEVATOR);
             player.openGui(McHeliNavalAddon.instance,
                            NavalGuiHandler.GUI_ELEVATOR,
                            world, pos.getX(), pos.getY(), pos.getZ());
+            McHeliNavalAddon.logger.info("[Elevator] openGui 呼び出し完了");
         }
         return true;
     }
 
     @Override
     public TileEntity createNewTileEntity(World world, int meta) {
+        McHeliNavalAddon.logger.info("[Elevator] createNewTileEntity @ meta={}", meta);
         return new TileEntityElevatorController();
     }
 
