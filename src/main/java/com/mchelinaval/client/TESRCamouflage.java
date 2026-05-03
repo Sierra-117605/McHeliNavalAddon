@@ -20,56 +20,47 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * テクスチャ偽装レンダラー（TESR）。
  *
  * 偽装ブロックが設定されている場合のみ動作する。
- * （設定なしの場合はブロック自体のモデルが通常通り描画されるため何もしない）
  *
- * 【重要】renderModel の第4引数は BlockPos.ORIGIN を渡すこと。
- *   te.getPos()（ワールド座標）を渡すと、GLの座標変換と二重になって
- *   偽装テクスチャがブロックの遥か彼方に描画されてしまう。
+ * 【座標計算の重要な注意点】
+ *   renderModel の第4引数（BlockPos）は以下の2つに使われる：
+ *     (A) 光レベル・AO計算 → 実際のブロック位置 te.getPos() を渡す必要がある
+ *     (B) バッファへの頂点オフセット → ワールド座標分だけ頂点がズレる
+ *
+ *   (B) のズレを補正するため、GL translate を
+ *     「カメラ相対オフセット(x,y,z) - ワールド座標(posX,posY,posZ)」
+ *   に設定する。こうすると頂点が (posX + [0..1]) で出力されても
+ *   最終的に (x + [0..1]) = 正しい画面位置に来る。
+ *
+ *   ※ BlockPos.ORIGIN を使うと頂点位置は正しいが地底(0,0,0)の光を
+ *     参照するため真っ黒になる。
  */
 @SideOnly(Side.CLIENT)
 public class TESRCamouflage<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
 
-    /** ログスパム防止用：最後にログを出したmimicState */
-    private IBlockState lastLoggedMimic = null;
-
-    public TESRCamouflage() {
-        McHeliNavalAddon.logger.info("[TESR] TESRCamouflage インスタンス生成: {}", this.getClass().getSimpleName());
-    }
+    public TESRCamouflage() {}
 
     @Override
     public void render(T te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
 
-        // 偽装なしなら何もしない（ブロックのモデルが普通に描画される）
-        if (!(te instanceof IHasMimic)) {
-            McHeliNavalAddon.logger.warn("[TESR] render呼び出し: TEがIHasMimicを実装していない → {} @ {}",
-                te.getClass().getSimpleName(), te.getPos());
-            return;
-        }
-
+        if (!(te instanceof IHasMimic)) return;
         IBlockState mimic = ((IHasMimic) te).getMimicState();
-
-        // mimicが変わったときだけログ出力（毎フレームだとスパムになる）
-        if (mimic != lastLoggedMimic) {
-            lastLoggedMimic = mimic;
-            if (mimic == null) {
-                McHeliNavalAddon.logger.info("[TESR] {} @ {} : mimic=null → 通常描画（TESR何もしない）",
-                    te.getClass().getSimpleName(), te.getPos());
-            } else {
-                McHeliNavalAddon.logger.info("[TESR] {} @ {} : mimic={} → 偽装描画開始",
-                    te.getClass().getSimpleName(), te.getPos(),
-                    mimic.getBlock().getRegistryName());
-            }
-        }
-
         if (mimic == null) return;
 
         // ======= 偽装ブロックのモデルを描画 =======
         Minecraft mc = Minecraft.getMinecraft();
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
+        BlockPos blockPos = te.getPos();
+
         GlStateManager.pushMatrix();
-        GlStateManager.translate(x, y, z);  // カメラ相対のブロック位置へ移動
+        // te.getPos() を renderModel に渡すため、その分 GL 座標をずらして補正する
+        // 補正後の頂点位置: (posX + frac) + (x - posX) = x + frac → 正しい画面位置
+        GlStateManager.translate(
+            x - blockPos.getX(),
+            y - blockPos.getY(),
+            z - blockPos.getZ()
+        );
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(
             GlStateManager.SourceFactor.SRC_ALPHA,
@@ -80,13 +71,13 @@ public class TESRCamouflage<T extends TileEntity> extends TileEntitySpecialRende
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
 
-        buf.begin(7, DefaultVertexFormats.BLOCK); // 7 = GL_QUADS
-        // ※ 第4引数は BlockPos.ORIGIN（絶対座標を渡すと二重オフセットになるバグに注意）
+        buf.begin(7, DefaultVertexFormats.BLOCK);
+        // te.getPos() を渡すことで実際の位置から光レベルを取得する（真っ黒を防ぐ）
         brd.getBlockModelRenderer().renderModel(
             te.getWorld(),
             brd.getBlockModelShapes().getModelForState(mimic),
             mimic,
-            BlockPos.ORIGIN,   // ← ここが重要！te.getPos() ではなく ORIGIN
+            te.getPos(),
             buf,
             false
         );

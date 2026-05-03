@@ -6,6 +6,7 @@ import com.mchelinaval.util.McheliReflect;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -18,7 +19,9 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * エレベーターコントローラーのTileEntity。
@@ -144,21 +147,38 @@ public class TileEntityElevatorController extends TileEntity implements ITickabl
     }
 
     // -------------------------------------------------------
-    // フロアマーカーをY列で探す（昇順ソート）
+    // フロアマーカーをY高さで探す（昇順ソート）
     // -------------------------------------------------------
+    /**
+     * コントローラー周辺 range×range の範囲内にあるフロアマーカーの
+     * Y座標一覧を返す（重複なし・昇順）。
+     *
+     * 【以前の設計】コントローラーと同じ X/Z 列のみ検索 → 使いにくかった
+     * 【現在の設計】range 内にあるどのフロアマーカーも停止位置として認識する
+     */
     private List<Integer> findFloorYs() {
-        List<Integer> result = new ArrayList<>();
-        if (world == null) return result;
+        Set<Integer> foundYs = new HashSet<>();
+        if (world == null) return new ArrayList<>();
 
         int cx = pos.getX(), cz = pos.getZ(), base = pos.getY();
-        for (int dy = -FLOOR_SEARCH_RANGE; dy <= FLOOR_SEARCH_RANGE; dy++) {
-            int y = base + dy;
-            if (y < 0 || y > 255) continue;
-            if (world.getBlockState(new BlockPos(cx, y, cz)).getBlock() instanceof BlockFloorMarker) {
-                result.add(y);
+
+        for (int dx = -range; dx <= range; dx++) {
+            for (int dz = -range; dz <= range; dz++) {
+                for (int dy = -FLOOR_SEARCH_RANGE; dy <= FLOOR_SEARCH_RANGE; dy++) {
+                    int y = base + dy;
+                    if (y < 0 || y > 255) continue;
+                    if (world.getBlockState(new BlockPos(cx + dx, y, cz + dz))
+                             .getBlock() instanceof BlockFloorMarker) {
+                        foundYs.add(y);
+                    }
+                }
             }
         }
+
+        List<Integer> result = new ArrayList<>(foundYs);
         Collections.sort(result);
+        McHeliNavalAddon.logger.info("[ElevatorTE] findFloorYs: {} フロアを発見 → {}",
+            result.size(), result);
         return result;
     }
 
@@ -173,7 +193,18 @@ public class TileEntityElevatorController extends TileEntity implements ITickabl
         );
         for (Entity e : world.getEntitiesWithinAABB(Entity.class, box)) {
             if (e instanceof EntityPlayer || McheliReflect.isMcheliAircraft(e)) {
-                e.setPosition(e.posX, e.posY + dy, e.posZ + dz);
+                double nx = e.posX;
+                double ny = e.posY + dy;
+                double nz = e.posZ + dz;
+
+                if (e instanceof EntityPlayerMP) {
+                    // プレイヤーは setPosition だけではクライアント側で無視される。
+                    // setPlayerLocation でテレポートパケットを送って強制移動させる。
+                    ((EntityPlayerMP) e).connection.setPlayerLocation(nx, ny, nz,
+                        e.rotationYaw, e.rotationPitch);
+                } else {
+                    e.setPosition(nx, ny, nz);
+                }
             }
         }
     }

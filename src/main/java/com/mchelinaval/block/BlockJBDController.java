@@ -66,7 +66,8 @@ public class BlockJBDController extends Block implements ITileEntityProvider {
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
-        return !state.getValue(DISGUISED);
+        // 常に true（偽装中も隣接ブロックの内面を非表示にする）
+        return true;
     }
 
     @Override

@@ -63,7 +63,9 @@ public class BlockElevatorController extends Block implements ITileEntityProvide
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
-        return !state.getValue(DISGUISED);
+        // 常に true（偽装中も隣接ブロックの内面を非表示にする）
+        // false にすると disguised=true 時に隣のブロックの内面が透けて見える
+        return true;
     }
 
     @Override

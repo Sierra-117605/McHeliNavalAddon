@@ -5,6 +5,7 @@ import com.mchelinaval.util.McheliReflect;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -115,7 +116,16 @@ public class TileEntityJBDController extends TileEntity implements ITickable, IH
         );
         for (Entity e : world.getEntitiesWithinAABB(Entity.class, box)) {
             if (e instanceof EntityPlayer || McheliReflect.isMcheliAircraft(e)) {
-                e.setPosition(e.posX, e.posY + dy, e.posZ + dz);
+                double nx = e.posX;
+                double ny = e.posY + dy;
+                double nz = e.posZ + dz;
+
+                if (e instanceof EntityPlayerMP) {
+                    ((EntityPlayerMP) e).connection.setPlayerLocation(nx, ny, nz,
+                        e.rotationYaw, e.rotationPitch);
+                } else {
+                    e.setPosition(nx, ny, nz);
+                }
             }
         }
     }
