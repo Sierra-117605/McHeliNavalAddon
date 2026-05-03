@@ -97,7 +97,34 @@ brd.getBlockModelRenderer().renderModel(
   - コントローラーが同X/Z列のフロアマーカーYを検索して停止位置にする
   - エンティティはコントローラー周辺の `range` 内のものを全部移動（プレイヤー + MCHELI機体）
 - **JBD**: コントローラー1個 + フロアマーカーをデフレクター面に敷く
-  - GUIから手動展開/格納（カタパルトとの自動連動なし）
+  - GUIから手動展開/格納も可能
+  - カタパルトと隣接させると自動連動（下記参照）
+
+---
+
+## カタパルト ↔ JBD 隣接自動連動
+
+```java
+// TileEntityCatapult.update() — 10tickごとに機体検知
+boolean aircraftNow = getAircraftOnBlock() != null;
+if (aircraftNow != wasAircraftPresent) {
+    wasAircraftPresent = aircraftNow;
+    notifyAdjacentJBDs(aircraftNow);  // 隣接6面を全スキャン
+}
+
+// 隣接TileEntityがJBDControllerなら deploy/retract を呼ぶ
+for (EnumFacing face : EnumFacing.VALUES) {
+    TileEntity te = world.getTileEntity(pos.offset(face));
+    if (te instanceof TileEntityJBDController) {
+        if (deploy) ((TileEntityJBDController) te).deploy();
+        else        ((TileEntityJBDController) te).retract();
+    }
+}
+```
+
+- **ポイント**: NBT登録なし・距離制限なし（隣接1ブロックのみ）
+- カタパルトに隣接して置くだけで自動連動。GUIによる手動操作も引き続き可能。
+- テクスチャ偽装で見た目を変えてもTileEntityの型は変わらないので連動は維持される。
 
 ---
 

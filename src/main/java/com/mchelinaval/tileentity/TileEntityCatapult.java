@@ -21,21 +21,62 @@ import java.util.List;
  * カタパルトのTileEntity。
  * fire() が呼ばれると、ブロック上のMCHELI機体を前方へ打ち出す。
  *
- * JBDとの連動は廃止。JBDは独立したJBDコントローラーで手動操作する。
+ * 【JBD自動連動】
+ *   カタパルトに隣接（6面）するJBDコントローラーを自動検出する。
+ *   - 機体が乗った瞬間 → 隣接JBDをdeploy（展開）
+ *   - 機体が離れた瞬間 → 隣接JBDをretract（格納）
+ *   ※ リンク登録不要。隣に置くだけで連動する。
  */
 public class TileEntityCatapult extends TileEntity implements ITickable {
 
     public static float LAUNCH_SPEED = 3.0f;
+
+    /** 前tickの艦載機検知状態（変化を検出するために保持） */
+    private boolean wasAircraftPresent = false;
+    /** tickカウンター（10tickごとにチェック） */
+    private int tickCounter = 0;
 
     @Override
     public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
         return oldState.getBlock() != newState.getBlock();
     }
 
-    /** 毎tick処理（現在は特に何もしない。JBD連動は廃止済み） */
+    /**
+     * 毎tick処理。
+     * 10tickごとに艦載機の有無をチェックし、変化があれば隣接JBDに通知する。
+     */
     @Override
     public void update() {
-        // JBD自動連動を廃止。JBDは独立してGUIから手動操作する。
+        if (world == null || world.isRemote) return;
+        // 10tickに1回だけチェック（パフォーマンス節約）
+        if (++tickCounter < 10) return;
+        tickCounter = 0;
+
+        boolean aircraftNow = getAircraftOnBlock() != null;
+        // 前tickと状態が変わったときだけ通知
+        if (aircraftNow != wasAircraftPresent) {
+            wasAircraftPresent = aircraftNow;
+            notifyAdjacentJBDs(aircraftNow);
+        }
+    }
+
+    /**
+     * カタパルトに隣接する（上下左右前後）JBDコントローラーを探し、
+     * deploy=trueなら展開、falseなら格納を呼ぶ。
+     */
+    private void notifyAdjacentJBDs(boolean deploy) {
+        for (EnumFacing face : EnumFacing.VALUES) {
+            TileEntity te = world.getTileEntity(pos.offset(face));
+            if (te instanceof TileEntityJBDController) {
+                if (deploy) {
+                    ((TileEntityJBDController) te).deploy();
+                } else {
+                    ((TileEntityJBDController) te).retract();
+                }
+                McHeliNavalAddon.logger.info("Catapult notified JBD at {} → {}",
+                    pos.offset(face), deploy ? "deploy" : "retract");
+            }
+        }
     }
 
     // -------------------------------------------------------
